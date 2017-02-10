@@ -134,7 +134,11 @@ double get_t_wall(Ants ants,double R,double r_enc,int &index1){
 					sqrt(pow(x*v_x+y*v_y,2)-(pow(v_x,2)+pow(v_y,2))*(pow(x,2)+pow(y,2)-pow(R-r_enc,2))))
 					/(pow(v_x,2)+pow(v_y,2));
 
-				std::cout << "Minimum Time: " << t_min << std::endl;
+				// Check if t_min is nan
+				if (t_min != t_min){
+					throw std::runtime_error("FAILED TO RESOLVE WALL COLLISION! TOO MANY ANTS");
+				}
+
 				index1 = i;
 				init = true; // we have initialized t_min
 				break;
@@ -150,11 +154,16 @@ double get_t_wall(Ants ants,double R,double r_enc,int &index1){
 			double v_x = ants.x_velocities[i];
 			double v_y = ants.y_velocities[i];
 			
-			//Get time to hit vertical wall
+			//Get time to hit wall
 			t_collide = (-1*(x*v_x+y*v_y)+
 					sqrt(pow(x*v_x+y*v_y,2)-(pow(v_x,2)+pow(v_y,2))*(pow(x,2)+pow(y,2)-pow(R-r_enc,2))))
 					/(pow(v_x,2)+pow(v_y,2));
-
+			
+			// Check if t_collide is nan
+			if (t_collide != t_collide){
+				throw std::runtime_error("FAILED TO RESOLVE WALL COLLISION! TOO MANY ANTS");
+			}
+	
 			if(t_collide < t_min){
 				t_min = t_collide;
 				index1 = i;

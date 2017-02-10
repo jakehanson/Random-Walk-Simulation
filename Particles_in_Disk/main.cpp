@@ -10,7 +10,7 @@ int main(int argc, char** argv)
 	double a = 0.5;  // aperture size
 	double temp = 5;  // temperature of box
 	double r_enc = 0.1;  // encounter radius
-	int num_ants = 10; // number of ants in simulation
+	int num_ants = 30; // number of ants in simulation
 
 	int max_init = 500;  // max number of tries to initialize a given setup 
 	int max_steps= 1000; // max number of events in simulation (event is collision w/ wall or ant)
@@ -51,8 +51,14 @@ int main(int argc, char** argv)
 	/* Run Sim */	
 	while(all_clear == false){
 		
-		t_wall = get_t_wall(ants,R,r_enc,index1); // how long until colliding with wall?
-		//std::cout << "Time: " << t_wall << std::endl;
+		try{
+			t_wall = get_t_wall(ants,R,r_enc,index1); // how long until colliding with wall?
+			//std::cout << "Time: " << t_wall << std::endl;
+		}
+		catch(std::runtime_error &e){
+			std::cerr << "RUNTIME ERROR: " << e.what() << std::endl;
+			return 1;
+		}
 		if(collision_flag){
 			t_ant = get_t_ant(ants,r_enc,t_wall,index2,index3); // how long before colliding with another ant?
 		}
