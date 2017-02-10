@@ -1,0 +1,2 @@
+R	a	temp	r_enc	num_ants	collision_flag
+2	0.5	5	0.1	100	1
