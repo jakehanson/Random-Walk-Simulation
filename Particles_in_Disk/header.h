@@ -21,7 +21,8 @@ struct Ants
 	void populate(double R, double T,double r_enc,int max_init);  // populate function without passing a seed
 	void populate(double R, double T,double r_enc,int max_init, int seed);  // populate function with a seed
 	void populate(double R, double T,double r_enc,int max_init, std::random_device &rd);  // populate function with reference to rd
-
+	void populate(double R, double a, double T, double r_enc); // populate function for a single ant at top-center of nest
+	
 	/* Function to update particle locations */
 	void update(double R,double r_enc,double a,double t_min,int index1); // version 1 is for two particles colliding
 	void update(double t_min,double r_enc,int index2,int index3); // version 2 is for a particle colliding with wall
