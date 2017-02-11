@@ -10,10 +10,11 @@ int main(int argc, char** argv)
 	double a = 0.5;  // aperture size
 	double temp = 5;  // temperature of box
 	double r_enc = 0.1;  // encounter radius
-	int num_ants = 30; // number of ants in simulation
+	int num_ants = 1; // number of ants in simulation
+	bool single_particle = true; // true means we start a single particle IN APERTURE
 
 	int max_init = 500;  // max number of tries to initialize a given setup 
-	int max_steps= 1000; // max number of events in simulation (event is collision w/ wall or ant)
+	int max_steps= 10000; // max number of events in simulation (event is collision w/ wall or ant)
 
 	int ants_in_nest; // used to calculate how many ants are in nest
 	bool collision_flag = true; // true means collisions are on
@@ -39,7 +40,12 @@ int main(int argc, char** argv)
 	/* Initialize ants */	 	
 	Ants ants = Ants(num_ants); // instance of Ants called ants
 	try{
-	ants.populate(R,temp,r_enc,max_init); // initialize positions and velocities
+		if(single_particle){
+			ants.populate(R,a,temp,r_enc); // initialize a single particle
+		}
+		else{
+			ants.populate(R,temp,r_enc,max_init); // initialize positions and velocities
+		}
 	}
 	catch(std::runtime_error &e){
 		std::cerr << "RUNTIME ERROR: " << e.what() << std::endl;
@@ -59,17 +65,16 @@ int main(int argc, char** argv)
 			std::cerr << "RUNTIME ERROR: " << e.what() << std::endl;
 			return 1;
 		}
-		if(collision_flag){
+		if(collision_flag == true && single_particle == false){
 			t_ant = get_t_ant(ants,r_enc,t_wall,index2,index3); // how long before colliding with another ant?
 		}
-		if(collision_flag && t_ant < t_wall){
+		if(collision_flag && single_particle == false && t_ant < t_wall){
 			ants.update(t_ant,r_enc,index2,index3); // run an ant collision
 		}
 		else{
 			ants.update(R,r_enc,a,t_wall,index1);
 		}
 
-		//std::cout << "x-position of ant 1: " << ants.x_positions[0] << std::endl;		
 		data_file << ants; //write to file
 
 		//Calculate how many ants are still in nest

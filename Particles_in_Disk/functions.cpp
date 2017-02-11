@@ -39,7 +39,7 @@ Ants::Ants(int num_ants)
 
 
 /* Define Method to Populate our arrays within Ant Class */
-/*Overload the shit out of it with ways of seeding random number*/
+/*Overload it with ways of initializing*/
 //Method 1: explicitly provide seed to populate
 void Ants::populate(double R, double T,double r_enc,int max_init, int seed)
 {
@@ -110,6 +110,48 @@ void Ants::populate(double R, double T,double r_enc,int max_init)
 void Ants::populate(double R, double T,double r_enc,int max_init, std::random_device &rd)
 {
 	populate(R,T,r_enc,max_init,rd()); // this will call method 1
+}
+
+//Method 4: Single ant starts at the top of the nest with random downward velocity
+void Ants::populate(double R, double a, double T, double r_enc)
+{
+	// Initialize positions at top center
+	if(x_positions.size() != 1){
+		throw std::runtime_error("INITIALIZATION FAILED! SINGLE ANT FLAG USED WITH MULTIPLE ANTS.");
+	}
+	else{
+		bool x_velo = false; // flags to insist velocity is downward
+		bool y_velo = false; // flags to insist velocity is downward
+		
+		// Init random device and seed it
+		std::random_device rd; // random device
+		double seed = rd(); // seed
+		std::mt19937 gen(seed); // create generator with seed
+		std::normal_distribution<double> nd(0.,1.0); // init normal dist with mean 0 and stddev 1
+		
+		// Init Positions
+		x_positions.at(0) = 0.0; // centered
+		y_positions.at(0) = R-r_enc; // located at top
+		
+		// Init velocities
+		while(x_velo == false){
+			x_velocities.at(0) = sqrt(T)*nd(gen);
+			if(x_velocities.at(0) < 0){
+				x_velo = true;
+			}
+		}
+		while(y_velo == false){
+			y_velocities.at(0) = sqrt(T)*nd(gen);
+			if(y_velocities.at(0) < 0){
+				y_velo = true;
+			}
+		}
+
+		event_time.at(0) = 0.0;
+		collisions.at(0) = 0.0;
+		exit_time.at(0) = -1.;
+		nest_flag.at(0) = true;
+	}
 }
 
 
