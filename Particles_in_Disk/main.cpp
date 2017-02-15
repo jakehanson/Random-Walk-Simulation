@@ -6,12 +6,12 @@
 int main(int argc, char** argv)
 {
 	/* Define Variables */
-	double R = 2;  // Box Radius
-	double a = 0.5;  // aperture size
+	double R = 3.8/2.;  // Box Radius (in cm)
+	double a = 1.0;  // aperture size (in cm)
 	double temp = 5;  // temperature of box
 	double r_enc = 0.1;  // encounter radius
 	int num_ants = 1; // number of ants in simulation
-	bool single_particle = true; // true means we start a single particle IN APERTURE
+	bool single_particle = true; // true means we start a single particle starting IN APERTURE
 
 	int max_init = 500;  // max number of tries to initialize a given setup 
 	int max_steps= 10000; // max number of events in simulation (event is collision w/ wall or ant)
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 		//Calculate how many ants are still in nest
 		ants_in_nest = std::accumulate(ants.nest_flag.begin(),ants.nest_flag.end(),0);
 		if(ants_in_nest == 0){
-			std::cout << "All Ants Have Left Nest" << std::endl;
+			//std::cout << "All Ants Have Left Nest" << std::endl;
 			all_clear = true;
 		}else{
 			counter++;
@@ -97,8 +97,8 @@ int main(int argc, char** argv)
 	// }
 
 	data_file.close();
-	std::cout << "ANTS LEFT: " << ants_in_nest << std::endl;
-	//std::cout << "SIMULATION COMPLETE." << std::endl;
+	// std::cout << "ANTS LEFT: " << ants_in_nest << std::endl;
+	// std::cout << "SIMULATION COMPLETE." << std::endl;
 
 }
 

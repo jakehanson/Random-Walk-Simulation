@@ -147,6 +147,8 @@ void Ants::populate(double R, double a, double T, double r_enc)
 			}
 		}
 
+		// Init all other parameters
+		ant_name.at(0) = 0;
 		event_time.at(0) = 0.0;
 		collisions.at(0) = 0.0;
 		exit_time.at(0) = -1.;
