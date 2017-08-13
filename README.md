@@ -2,6 +2,8 @@
 
 This is a general purpose brownian motion / random walk simulator designed to explore potential similarities between ants in their nests and particles in a disk. Collisions are typically handled using conservation of momentum and the 'hard body sphere' approximation. The simulation is event based which means timestep is dictated by the time until the next event (either collisions between particles or a particle and the wall). This avoids potential pitfalls due to simultaneous events and speeds up computation time, but, one should be aware that visualizations of the data will either have to be smoothed in time or appear jumpy due to the nonuniform timestep. More information about this type of simulation can be found here: http://introcs.cs.princeton.edu/java/assignments/collisions.html.
 
+![alt text](https://github.com/jakehanson/Random-Walk-Simulation/blob/new/GIFS/timing_visit_example.gif)
+
 ## Step 1 - Download and Run
 
 The code has three main components:
@@ -60,5 +62,3 @@ The secondary output is params.txt which basically rewrites the parameters used 
 
 ## Step 4 - Animation
 There is a jupyter notebook called Event Based Animation.ipynb that was used to generate animation gifs. While github can render the jupyter notebook in the browser, it must be run locally. Therefore, if you are unfamiliar with jupyter notebooks or have a favorite plotting software it is probably easier to read output.txt into whatever plotting package.
-
-![alt text](https://github.com/jakehanson/Random-Walk-Simulation/blob/new/GIFS/timing_visit_example.gif)
