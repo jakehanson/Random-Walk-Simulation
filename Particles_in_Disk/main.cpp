@@ -5,15 +5,27 @@
 /* Function to define geometry, initialize ants, and run/write simulation */
 int main(int argc, char** argv)
 {
-	/* Define Variables */
-	double R = 3.8/2.;  // Box Radius (in cm)
-	double a = 1.0;  // aperture size (in cm)
-	double temp = 5;  // temperature of box
-	double r_enc = 0.1;  // encounter radius
-	int num_ants = 1; // number of ants in simulation
-	bool single_particle = true; // true means we start a single particle starting IN APERTURE
 
-	int max_init = 500;  // max number of tries to initialize a given setup 
+	//First get number of ants in sim either from first arg of command line or hardcode
+	int num_ants;
+	if(argc == 1){
+		num_ants = 20; // number of ants in simulation
+	}else{
+		num_ants = atoi(argv[1]);
+	}
+	//std::cout << "Number of Ants:\t" << num_ants << std::endl;
+
+
+	/* Define Variables */
+	long double R = 2;  // Box Radius (in cm)
+	long double a = 1;  // aperture size (in cm)
+	long double velo = .1; // initial ant velocity (in cm/s)
+	long double r_enc = 0.1;  // encounter radius (cm)
+	bool single_particle = false; // true means we start a single particle starting IN APERTURE
+	bool fixed_velo = true; // if true, ants will never change velocity, only heading
+	bool start_in_center = true; // true means one ant 0 starts in center of aperture facing down
+	bool exit_flag = true; // true means the trial ends when ant 0 leaves 
+	int max_init = 500;  // max number of tries to initialize a given setup so no ants overlap 
 	int max_steps= 10000; // max number of events in simulation (event is collision w/ wall or ant)
 
 	int ants_in_nest; // used to calculate how many ants are in nest
@@ -21,15 +33,15 @@ int main(int argc, char** argv)
 	bool all_clear = false;  // used to break out of main simulation
 	int counter = 0; // counts simulation steps
 
-	double t_wall,t_ant; // variables to store the time until a collision	
-	int index1,index2,index3; // indices for particles of interest
+	long double t_wall,t_ant; // variables to store the time until a collision	
+	int index1,index2,index3; // indices for particles involved in collision
 	//int seed = 8;  // pass the same seed to 'populate' method to initialize trial the same way
 
 	// Write parameters to file
 	std::ofstream params("params.txt");
-	params << "R\ta\ttemp\tr_enc\tnum_ants\tcollision_flag" << std::endl;
-	params << R << "\t" << a << "\t" << temp << "\t" << r_enc << "\t" << num_ants << "\t"
-			<< collision_flag <<std::endl;
+	params << "R\ta\tvelocity\tr_enc\tnum_ants\tcollision_flag\tcenter_flag\texit_flag" << std::endl;
+	params << R << "\t" << a << "\t" << velo << "\t" << r_enc << "\t" << num_ants << "\t"
+			<< collision_flag << "\t" << start_in_center << "\t" << exit_flag << std::endl;
 	params.close();
 
 	// Open file to hold simulation data
@@ -41,10 +53,10 @@ int main(int argc, char** argv)
 	Ants ants = Ants(num_ants); // instance of Ants called ants
 	try{
 		if(single_particle){
-			ants.populate(R,a,temp,r_enc); // initialize a single particle
+			ants.populate(R,a,velo,r_enc); // initialize a single particle
 		}
 		else{
-			ants.populate(R,temp,r_enc,max_init); // initialize positions and velocities
+			ants.populate(R,velo,r_enc,max_init,start_in_center); // initialize positions and velocities
 		}
 	}
 	catch(std::runtime_error &e){
@@ -58,43 +70,61 @@ int main(int argc, char** argv)
 	while(all_clear == false){
 		
 		try{
-			t_wall = get_t_wall(ants,R,r_enc,index1); // how long until colliding with wall?
-			//std::cout << "Time: " << t_wall << std::endl;
+			t_wall = get_t_wall(ants,R,r_enc,index1); // how long double until colliding with wall?
 		}
 		catch(std::runtime_error &e){
 			std::cerr << "RUNTIME ERROR: " << e.what() << std::endl;
 			return 1;
 		}
+
 		if(collision_flag == true && single_particle == false){
-			t_ant = get_t_ant(ants,r_enc,t_wall,index2,index3); // how long before colliding with another ant?
-		}
-		if(collision_flag && single_particle == false && t_ant < t_wall){
-			ants.update(t_ant,r_enc,index2,index3); // run an ant collision
-		}
-		else{
-			ants.update(R,r_enc,a,t_wall,index1);
+			try{
+				t_ant = get_t_ant(ants,r_enc,t_wall,index2,index3); // how long double before colliding with another ant?
+			}
+			catch(std::runtime_error &e){
+				std::cerr << "RUNTIME ERROR: " << e.what() << std::endl;
+				return 1;
+			}
+			if(t_ant < t_wall && fixed_velo == false){
+				ants.update(t_ant,r_enc,index2,index3); // run an ant-to-ant collision with conservation of momentum
+			}else if(t_ant < t_wall && fixed_velo == true){
+				ants.update(t_ant,r_enc,index2,index3,velo); // run an ant-to-ant collision with fixed velocity
+			}else{
+				ants.update(R,r_enc,a,t_wall,index1);	// run ant-to-wall collisions for single particle
+			}
+		}else{
+			ants.update(R,r_enc,a,t_wall,index1);	// run ant-to-wall collisions for single particle
 		}
 
 		data_file << ants; //write to file
 
-		//Calculate how many ants are still in nest
-		ants_in_nest = std::accumulate(ants.nest_flag.begin(),ants.nest_flag.end(),0);
-		if(ants_in_nest == 0){
-			//std::cout << "All Ants Have Left Nest" << std::endl;
-			all_clear = true;
-		}else{
-			counter++;
-			//std::cout << "Counter: " << counter << "/" << max_steps << std::endl;
-			if(counter >= max_steps){
-				std::cout << "Maximum Iterations Reached" << std::endl;
+		// Test to see if the trial is done
+		if(exit_flag == true){
+			if(ants.nest_flag.at(0)==0){
+				//std::cout << "Ant 0 has left nest -- trial complete.\n";
+
+				std::cout << "Good\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
 				all_clear = true;
 			}
+		}else{
+			//Calculate how many ants are still in nest
+			ants_in_nest = std::accumulate(ants.nest_flag.begin(),ants.nest_flag.end(),0);
+			if(ants_in_nest == 0){
+				std::cout << "OK\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
+				//std::cout << "All ants have left nest -- trial complete.\n" << std::endl;
+				all_clear = true;
+			}else{
+				counter++;
+				//std::cout << "Counter: " << counter << "/" << max_steps << std::endl;
+				if(counter >= max_steps){
+					//std::cout << "Maximum iterations reached -- trial terminated.\n" << std::endl;
+					std::cout << "Bad\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
+					all_clear = true;
+				}
+			}			
 		}
 	}
 
-	// for(int a=0;a<ants.nest_flag.size();a++){
-	// 	std::cout << ants.collisions[a] << std::endl;
-	// }
 
 	data_file.close();
 	// std::cout << "ANTS LEFT: " << ants_in_nest << std::endl;
@@ -109,6 +139,9 @@ int main(int argc, char** argv)
 
 /****************** NOTES *******************/
 /*
+
+g++ -std=c++11 main.cpp functions.cpp -o run_sim.exe
+
 //prints ants to name.txt using operator overload
 std::ofstream file("name.txt");
 file << ants <<std::endl;
@@ -123,10 +156,10 @@ std::stringstream strstream  //stringstream is a class strstream is an instance
 strstream << ants << std::endl;
 std::string my_ant_string = strstream.str();
 std::cout << my_ant_string;
-"std::string" is the type for string. Like how "double" is the type for double
+"std::string" is the type for string. Like how "long double" is the type for long double
 
 //ant update(ant J);
-//ant initialize(ant J, int n, double array[n]);
+//ant initialize(ant J, int n, long double array[n]);
 
 //for (auto const &x : t.x_positions){}
 //drop the const and you can modify in place
@@ -135,7 +168,7 @@ std::cout << my_ant_string;
 //	int H = 10;  // Box Height
 //	int n = 10;  // Number of ants
 //	int counter;
-//	double value;
+//	long double value;
 
 //	srand48(time(0));
 	//printf("Time %ld\n",time(0));
@@ -152,7 +185,7 @@ std::cout << my_ant_string;
 
 //	ant ant_array[2];
 
-//	double init_pos[2] = {1.0,1.0};
+//	long double init_pos[2] = {1.0,1.0};
 
 //	initialize(J,2,init_pos);
 
@@ -175,7 +208,7 @@ std::cout << my_ant_string;
 */
 
 /*
-ant initialize(ant J, int n, double array[n]){
+ant initialize(ant J, int n, long double array[n]){
 	int i;
 
 	for(i=0;i<n;i++){
@@ -187,20 +220,5 @@ ant initialize(ant J, int n, double array[n]){
 ant update(ant J){
 	J.x = 1000;
 	return J;
-}
+}*/
 
-//#include <string>
-//#include <fstream>
-//#include <strstream>
-//#include <iomanip>  //allows us to use cout::setprecision()
-
-CAIRO Graphics for C or C++
-output as svg for animation?
-*/
-
-/*
-while (std::cin.good()){
-	std::cin >> number;
-	std::cout << (number*2) << std::endl;
-}
-*/
