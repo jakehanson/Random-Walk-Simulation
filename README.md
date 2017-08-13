@@ -61,4 +61,4 @@ The secondary output is params.txt which basically rewrites the parameters used 
 ## Step 4 - Animation
 There is a jupyter notebook called Event Based Animation.ipynb that was used to generate animation gifs. While github can render the jupyter notebook in the browser, it must be run locally. Therefore, if you are unfamiliar with jupyter notebooks or have a favorite plotting software it is probably easier to read output.txt into whatever plotting package.
 
-![alt text](https://github.com/jakehanson/Random-Walk-Simulation/blob/dev/GIFS/timing_visit_example.gif)
+![alt text](https://github.com/jakehanson/Random-Walk-Simulation/blob/new/GIFS/timing_visit_example.gif)
