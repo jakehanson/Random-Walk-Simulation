@@ -1,2 +1,0 @@
-R	a	velocity	r_enc	num_ants	collision_flag	center_flag	exit_flag
-2	1	0.1	0.1	20	1	1	1
