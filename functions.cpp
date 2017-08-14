@@ -210,7 +210,7 @@ long double get_t_wall(Ants ants,long double R,long double r_enc,int &index1){
 					sqrt(pow(x*v_x+y*v_y,2)-(pow(v_x,2)+pow(v_y,2))*(pow(x,2)+pow(y,2)-pow(R-r_enc,2))))
 					/(pow(v_x,2)+pow(v_y,2));
 
-			if(t_collide < t_min){
+			if(t_collide < t_min and pow(x,2.)+pow(y,2)<pow(R-r_enc,2.)){
 				t_min = t_collide;
 				index1 = i;
 			}
