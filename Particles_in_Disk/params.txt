@@ -1,2 +1,0 @@
-R	a	temp	r_enc	num_ants	collision_flag
-1.9	1	5	0.1	1	1
