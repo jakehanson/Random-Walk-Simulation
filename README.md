@@ -7,12 +7,11 @@ This is a general purpose brownian motion / random walk simulator designed to ex
 ## Step 1 - Download and Run
 
 The code has three main components:
+* **main.cpp** - sets up and runs simulation
 
-**main.cpp** - sets up and runs simulation
+* **functions.cpp** - contains the functions required by main.cpp
 
-**functions.cpp** - contains the functions required by main.cpp
-
-**header.h** - standard header for function prototypes and libraries
+* **header.h** - standard header for function prototypes and libraries
 
 To run the code, you must first download the three files above (or the entire directory) and compile it:
 
