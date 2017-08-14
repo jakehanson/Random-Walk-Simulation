@@ -21,19 +21,17 @@ There are also two subdirectories:
 ## Download and Run
 To run the code:
 
-* Download the primary files main.cpp, functions.cpp, header.h (or the entire directory)
-* Compile:
-*  g++ -std=c++11 main.cpp functions.cpp -o run_sim.exe
-*  This spits out an executable called 'run_sim.exe'
-* Run (Default):
-*  ./run_sim.exe
-* Run (+ Args)
-*  You can also run the sim by specifying the number of ants in the simulation on the command line:
-*  ./run_sim.exe n_ants
+* **Download**: the primary files main.cpp, functions.cpp, header.h (or the entire directory)
+* **Compile:** the code must be compiled to make an executable
+  * g++ -std=c++11 main.cpp functions.cpp -o run_sim.exe
+* **Run Option 1**: the code can be run from the command line without any arguments
+  * ./run_sim.exe
+* **Run Option 2:** the code can also be running by accepting the number of ants as an integer argument
+  *  ./run_sim.exe n_ants
 
-If everything is working, ./run_sim.exe should create output files params.txt and data.txt.
+As a first check that everything is working, ./run_sim.exe should produce to output files 'params.txt' and 'output.txt'.
 
-## Initializing parameters
+## Initializing Parameters
 
 Once you have the source code in your local directory you can modify the simulation parameters by opening main.cpp in a text editor and changing the variables and flags at the top.
 
