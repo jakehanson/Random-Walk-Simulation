@@ -47,18 +47,23 @@ void Ants::populate(long double R, long double velo,long double r_enc,int max_in
 	std::normal_distribution<long double> nd(0.,1.0); // init normal dist with mean 0 and stddev 1
 	std::uniform_real_distribution<long double> uni(0.,1); // init uniform dist on (0,1]
 
+	// Define polar coords for position and velocity
+	long double radius;
+	long double pos_angle; 
+	long double velo_angle;
+
 	// If start_in_center initialize ant 0 in center of aperture with downward velo
 	int index = 0;
 	if(start_in_center == true)
 	{
-		// Init Position
+		// init position
 		x_positions.at(0) = 0.0; // centered
 		y_positions.at(0) = R-r_enc; // located at top
 
-		// Init Velocity
-		long double angle = M_PI+uni(gen)*M_PI; // angle between pi and 2 pi (downward)
-		x_velocities.at(0) = velo*cos(angle);
-		y_velocities.at(0) = velo*sin(angle);
+		// init velocity
+		velo_angle = M_PI+uni(gen)*M_PI; // angle between pi and 2 pi (downward)
+		x_velocities.at(0) = velo*cos(velo_angle);
+		y_velocities.at(0) = velo*sin(velo_angle);
 
 		// Init all other parameters
 		ant_name.at(0) = 0;
@@ -73,14 +78,15 @@ void Ants::populate(long double R, long double velo,long double r_enc,int max_in
 	// Initialize all positions and velocities
 	for (int i=index; i<x_positions.size();++i)
 	{
-		long double radius = uni(gen)*(R-r_enc);
-		long double angle1 = uni(gen)*2*M_PI;
-		long double angle2 = uni(gen)*2*M_PI;
-		ant_name.at(i) = i                                         ;
-		x_positions.at(i) = radius*cos(angle1); // x=rcos(theta): r in (0,R-r_enc) and theta in (0,2pi)
-		y_positions.at(i) = radius*sin(angle1); // y=rsin(theta)
-		x_velocities.at(i) = velo*cos(angle2); // initialize velocity in x direction
-		y_velocities.at(i) = velo*sin(angle2); // initialize velicity in y direction
+		radius = uni(gen)*(R-r_enc);
+		pos_angle = uni(gen)*2*M_PI; // position angle
+		velo_angle = uni(gen)*2*M_PI; // velocity angle
+
+		ant_name.at(i) = i;
+		x_positions.at(i) = radius*cos(pos_angle); // x=rcos(theta): r in (0,R-r_enc) and theta in (0,2pi)		
+		y_positions.at(i) = radius*sin(pos_angle); // y=rsin(theta)
+		x_velocities.at(i) = velo*cos(velo_angle); // initialize velocity in x direction
+		y_velocities.at(i) = velo*sin(velo_angle); // initialize velicity in y direction
 		event_time.at(i) = 0.0;
 		collisions.at(i) = 0.0;
 		exit_time.at(i) = -1.;
@@ -91,7 +97,7 @@ void Ants::populate(long double R, long double velo,long double r_enc,int max_in
 	int counter = 0; // keep track of tries to initialize
 	for (int j=0; j<x_positions.size();++j){
 	
-		int tally=0; // keeps track of  all the other particles
+		int tally=0; // keeps track of all the other particles
 		bool all_clear=false; // must ensure the particle clears all neighbors
 		long double r;
 
@@ -104,9 +110,12 @@ void Ants::populate(long double R, long double velo,long double r_enc,int max_in
 			for(int k=0;k<x_positions.size();++k){
 				if(k!=j){
 					r = sqrt(pow(x_positions[k]-x_positions[j],2)+pow(y_positions[k]-y_positions[j],2));
-					if(r<2*r_enc){
-						x_positions.at(j) = uni(gen)*(R-r_enc)*cos(uni(gen)*2.*M_PI); // redraw
-						y_positions.at(j) = uni(gen)*(R-r_enc)*sin(uni(gen)*2.*M_PI);
+					if(r<2.*r_enc){
+						// if overlap, redraw angle and radius
+						radius = uni(gen)*(R-r_enc);
+						pos_angle = uni(gen)*2*M_PI;
+						x_positions.at(j) = radius*cos(pos_angle);		
+						y_positions.at(j) = radius*sin(pos_angle);
 						tally = 0; // reset talley
 						counter++;
 						if(counter>max_init){
@@ -156,9 +165,9 @@ void Ants::populate(long double R, long double a, long double velo, long double 
 		y_positions.at(0) = R-r_enc; // located at top
 
 		// Init Velocity
-		long double angle = M_PI+uni(gen)*M_PI; // angle between pi and 2 pi (downward)
-		x_velocities.at(0) = velo*cos(angle);
-		y_velocities.at(0) = velo*sin(angle);
+		long double velo_angle = M_PI+uni(gen)*M_PI; // angle between pi and 2 pi (downward)
+		x_velocities.at(0) = velo*cos(velo_angle);
+		y_velocities.at(0) = velo*sin(velo_angle);
 
 		// Init all other parameters
 		ant_name.at(0) = 0;

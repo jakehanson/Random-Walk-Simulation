@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 	long double a = 1;  // aperture size (in cm)
 	long double velo = .1; // initial ant velocity (in cm/s)
 	long double r_enc = 0.1;  // encounter radius (cm)
-	bool single_particle = false; // true means we start a single particle starting IN APERTURE
+	bool single_particle = false; // true means we start a single particle starting IN APERTURE CENTER
 	bool fixed_velo = true; // if true, ants will never change velocity, only heading
 	bool start_in_center = true; // true means one ant 0 starts in center of aperture facing down
 	bool exit_flag = true; // true means the trial ends when ant 0 leaves 
@@ -63,7 +63,7 @@ int main(int argc, char** argv)
 		std::cerr << "RUNTIME ERROR: " << e.what() << std::endl;
 		return 1;
 	}
-
+	
 	data_file << ants; //prints all of ants to name.txt using overloaded operator <<
 
 	/* Run Sim */	
