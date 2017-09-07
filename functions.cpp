@@ -95,14 +95,14 @@ void Ants::populate(long double R, long double velo,long double r_enc,int max_in
 	
 	// Make sure particles don't overlap!
 	int counter = 0; // keep track of tries to initialize
-	for (int j=0; j<x_positions.size();++j){
+	for (int j=1; j<x_positions.size();++j){
 	
 		int tally=0; // keeps track of all the other particles
 		bool all_clear=false; // must ensure the particle clears all neighbors
 		long double r;
 
 		while(all_clear==false){
-			// as long double as we haven't cleared everyone keep going through and redrawing
+			// as long as we haven't cleared everyone keep going through and redrawing
 			if(x_positions.size() == 1){
 				break; // if we only have one particle this is pointless
 			}
@@ -131,6 +131,13 @@ void Ants::populate(long double R, long double velo,long double r_enc,int max_in
 					}
 				}
 			}
+		}
+	}
+
+	/* Make sure we obeyed the start in center flag */
+	if(start_in_center == true){
+		if(x_positions.at(0) != 0.0 or y_positions.at(0) != (R-r_enc)){
+			throw std::runtime_error("START IN CENTER FLAG VIOLATED DURING INITIALIZATION.");
 		}
 	}
 }

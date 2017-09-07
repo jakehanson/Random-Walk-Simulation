@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 	bool start_in_center = true; // true means one ant 0 starts in center of aperture facing down
 	bool exit_flag = true; // true means the trial ends when ant 0 leaves 
 	int max_init = 500;  // max number of tries to initialize a given setup so no ants overlap 
-	int max_steps= 10000; // max number of events in simulation (event is collision w/ wall or ant)
+	int max_steps= 1; // max number of events in simulation (event is collision w/ wall or ant)
 
 	int ants_in_nest; // used to calculate how many ants are in nest
 	bool collision_flag = true; // true means collisions are on
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 			if(ants.nest_flag.at(0)==0){
 				//std::cout << "Ant 0 has left nest -- trial complete.\n";
 
-				std::cout << "Good\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
+				std::cout << "Good\t" << num_ants << "\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
 				all_clear = true;
 			}
 		}else{
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
 				//std::cout << "Counter: " << counter << "/" << max_steps << std::endl;
 				if(counter >= max_steps){
 					//std::cout << "Maximum iterations reached -- trial terminated.\n" << std::endl;
-					std::cout << "Bad\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
+					std::cout << "Bad\t" << num_ants << "\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
 					all_clear = true;
 				}
 			}			
@@ -131,94 +131,3 @@ int main(int argc, char** argv)
 	// std::cout << "SIMULATION COMPLETE." << std::endl;
 
 }
-
-
-
-
-
-
-/****************** NOTES *******************/
-/*
-
-g++ -std=c++11 main.cpp functions.cpp -o run_sim.exe
-
-//prints ants to name.txt using operator overload
-std::ofstream file("name.txt");
-file << ants <<std::endl;
-file.close();
-
-//prints ants to cout (terminal) using operator overload
-std::cout << ants;  //prints ants to terminal
-
-// convert to string by passing to stringstream
-std::stringstream strstream  //stringstream is a class strstream is an instance
-//basically the above line does what std::ofstream or std::cout does
-strstream << ants << std::endl;
-std::string my_ant_string = strstream.str();
-std::cout << my_ant_string;
-"std::string" is the type for string. Like how "long double" is the type for long double
-
-//ant update(ant J);
-//ant initialize(ant J, int n, long double array[n]);
-
-//for (auto const &x : t.x_positions){}
-//drop the const and you can modify in place
-*/
-//	int L = 10;  // Box Length
-//	int H = 10;  // Box Height
-//	int n = 10;  // Number of ants
-//	int counter;
-//	long double value;
-
-//	srand48(time(0));
-	//printf("Time %ld\n",time(0));
-	//srand48(1.0)
-/*	
-	for (counter=0;counter<=100;counter++){
-		value = drand48();
-		printf("%f\n",value);
-	}
-*/
-
-//	ant J = {1.0,1.0,5.0,5.0,1,"jake","hanson","jake1","hanson1"};
-//	ant K = {5.0,5.0,1.0,1.0,2,"nida","raja","nida1","raja1"};
-
-//	ant ant_array[2];
-
-//	long double init_pos[2] = {1.0,1.0};
-
-//	initialize(J,2,init_pos);
-
-
-/*
-	printf("Before: %f\n",J.x);
-	J = update(J);
-	printf("After: %f\n",J.x);
-*/	
-//	printf("%f\t %f\t %f\t %f\t %s\t %s\n",J.x,J.y,J.v_x,J.v_y,J.name1,J.name2);
-/*	if(strncmp("jake","jake",4) == 0){
-		printf("YES!!!\n");
-	};
-*/
-//	printf"
-//	printf("%d\n",argc);
-/*	for ( i=0; i<argc; i++){
-		printf("%s\n", argv[i]);
-	}
-*/
-
-/*
-ant initialize(ant J, int n, long double array[n]){
-	int i;
-
-	for(i=0;i<n;i++){
-		printf("%f\n",array[i]);
-	}
-
-	return J;
-}
-ant update(ant J){
-	J.x = 1000;
-	return J;
-}*/
-
