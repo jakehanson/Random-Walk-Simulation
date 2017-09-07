@@ -13,7 +13,7 @@ The code has three primary files:
 * **header.h** - standard header for function prototypes and libraries
 
 There are also two subdirectories:
-* **GIFS** - example animations from simulation output
+* **IMAGES** - example animations from simulation output
 
 * **MODELS** - various models that are derived from, but differ, from the source code
 
