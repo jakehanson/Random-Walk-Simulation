@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 	bool start_in_center = true; // true means one ant 0 starts in center of aperture facing down
 	bool exit_flag = true; // true means the trial ends when ant 0 leaves 
 	int max_init = 500;  // max number of tries to initialize a given setup so no ants overlap 
-	int max_steps= 10000; // max number of events in simulation (event is collision w/ wall or ant)
+	int max_steps= 50000; // max number of events in simulation (event is collision w/ wall or ant)
 
 	int ants_in_nest; // used to calculate how many ants are in nest
 	bool collision_flag = true; // true means collisions are on
@@ -98,11 +98,18 @@ int main(int argc, char** argv)
 
 		data_file << ants; //write to file
 
-		// Test to see if the trial is done
+		// Test to see if we've reached max iterations
+		counter++;
+		//std::cout << "Counter: " << counter << "/" << max_steps << std::endl;
+		if(counter >= max_steps){
+			//std::cout << "Maximum iterations reached -- trial terminated." << std::endl;
+			std::cout << "Bad\t" << num_ants << "\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
+			all_clear = true;
+		}
+		// Test to see if ant 0 has left
 		if(exit_flag == true){
 			if(ants.nest_flag.at(0)==0){
 				//std::cout << "Ant 0 has left nest -- trial complete.\n";
-
 				std::cout << "Good\t" << num_ants << "\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
 				all_clear = true;
 			}
@@ -110,17 +117,9 @@ int main(int argc, char** argv)
 			//Calculate how many ants are still in nest
 			ants_in_nest = std::accumulate(ants.nest_flag.begin(),ants.nest_flag.end(),0);
 			if(ants_in_nest == 0){
-				std::cout << "OK\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
+				std::cout << "Good\t" << num_ants << "\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
 				//std::cout << "All ants have left nest -- trial complete.\n" << std::endl;
 				all_clear = true;
-			}else{
-				counter++;
-				//std::cout << "Counter: " << counter << "/" << max_steps << std::endl;
-				if(counter >= max_steps){
-					//std::cout << "Maximum iterations reached -- trial terminated.\n" << std::endl;
-					std::cout << "Bad\t" << num_ants << "\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
-					all_clear = true;
-				}
 			}			
 		}
 	}
