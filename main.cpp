@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 	bool start_in_center = true; // true means one ant 0 starts in center of aperture facing down
 	bool exit_flag = true; // true means the trial ends when ant 0 leaves 
 	int max_init = 500;  // max number of tries to initialize a given setup so no ants overlap 
-	int max_steps= 1; // max number of events in simulation (event is collision w/ wall or ant)
+	int max_steps= 10000; // max number of events in simulation (event is collision w/ wall or ant)
 
 	int ants_in_nest; // used to calculate how many ants are in nest
 	bool collision_flag = true; // true means collisions are on
