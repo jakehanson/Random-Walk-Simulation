@@ -20,10 +20,7 @@ std::ostream &operator<<(std::ostream &out, Ants const &ants)
 	return out;
 }
 
-
 /* Define our constructor. Pass Args to this to create an instance of Ant Class */
-/* Note: Its a constructor because there's no return type and method name 'Ants' matches class name. */
-//Ants::Ants(size_t num_ants, long double temp)
 Ants::Ants(int num_ants)
 {
 	ant_name = std::vector<int>(num_ants);
@@ -37,152 +34,58 @@ Ants::Ants(int num_ants)
 	nest_flag = std::vector<bool>(num_ants);
 }
 
-
 /* Define Method to Populate our arrays within Ant Class */
-/*Overload it with ways of initializing*/
-//Method 1: explicitly provide seed to populate
-void Ants::populate(long double R, long double velo,long double r_enc,int max_init, int seed, bool start_in_center)
+void Ants::populate(void)
 {
-	std::mt19937 gen(seed); // create generator with default seed
-	std::normal_distribution<long double> nd(0.,1.0); // init normal dist with mean 0 and stddev 1
-	std::uniform_real_distribution<long double> uni(0.,1); // init uniform dist on (0,1]
-
-	// Define polar coords for position and velocity
-	long double radius;
-	long double pos_angle; 
-	long double velo_angle;
-
-	// If start_in_center initialize ant 0 in center of aperture with downward velo
-	int index = 0;
-	if(start_in_center == true)
-	{
-		// init position
-		x_positions.at(0) = 0.0; // centered
-		y_positions.at(0) = R-r_enc; // located at top
-
-		// init velocity
-		velo_angle = M_PI+uni(gen)*M_PI; // angle between pi and 2 pi (downward)
-		x_velocities.at(0) = velo*cos(velo_angle);
-		y_velocities.at(0) = velo*sin(velo_angle);
-
-		// Init all other parameters
-		ant_name.at(0) = 0;
-		event_time.at(0) = 0.0;
-		collisions.at(0) = 0.0;
-		exit_time.at(0) = -1.;
-		nest_flag.at(0) = true;
-
-		index = index + 1;
-	}
-
-	// Initialize all positions and velocities
-	for (int i=index; i<x_positions.size();++i)
-	{
-		radius = uni(gen)*(R-r_enc);
-		pos_angle = uni(gen)*2*M_PI; // position angle
-		velo_angle = uni(gen)*2*M_PI; // velocity angle
-
+	for(int i=0;i<x_positions.size();i++){
 		ant_name.at(i) = i;
-		x_positions.at(i) = radius*cos(pos_angle); // x=rcos(theta): r in (0,R-r_enc) and theta in (0,2pi)		
-		y_positions.at(i) = radius*sin(pos_angle); // y=rsin(theta)
-		x_velocities.at(i) = velo*cos(velo_angle); // initialize velocity in x direction
-		y_velocities.at(i) = velo*sin(velo_angle); // initialize velicity in y direction
-		event_time.at(i) = 0.0;
-		collisions.at(i) = 0.0;
-		exit_time.at(i) = -1.;
-		nest_flag.at(i) = true;
+		x_positions.at(i) = 0.;
+		y_positions.at(i) = 0.;
+		x_velocities.at(i) = 0.;
+		y_velocities.at(i) = 0.;
+		event_time.at(i) = 0.;
+		exit_time.at(i) = -1;
+		collision.at(i) = 0.;
+		nest_flag.at(i) = false;
 	}
-	
-	// Make sure particles don't overlap!
-	int counter = 0; // keep track of tries to initialize
-	for (int j=1; j<x_positions.size();++j){
-	
-		int tally=0; // keeps track of all the other particles
-		bool all_clear=false; // must ensure the particle clears all neighbors
-		long double r;
+}
 
-		while(all_clear==false){
-			// as long as we haven't cleared everyone keep going through and redrawing
-			if(x_positions.size() == 1){
-				break; // if we only have one particle this is pointless
-			}
-			// check all particle pairs
-			for(int k=0;k<x_positions.size();++k){
-				if(k!=j){
-					r = sqrt(pow(x_positions[k]-x_positions[j],2)+pow(y_positions[k]-y_positions[j],2));
-					if(r<2.*r_enc){
-						// if overlap, redraw angle and radius
-						radius = uni(gen)*(R-r_enc);
-						pos_angle = uni(gen)*2*M_PI;
-						x_positions.at(j) = radius*cos(pos_angle);		
-						y_positions.at(j) = radius*sin(pos_angle);
-						tally = 0; // reset talley
-						counter++;
-						if(counter>max_init){
-							all_clear=true;
-							throw std::runtime_error("FAILED TO INITIALIZE PARTICLES! NOT ENOUGH NEST SPACE.");
-						}
-						break; //break out of for loop
-					}else{
-						tally++; // we have successfully dodged another particle
-						if(tally == x_positions.size()-1){
-							all_clear=true; // we can only get here if we dodge all particles
-						}
-					}
-				}
-			}
+
+/* Define method for adding an ant in the center of aperture */
+int Ants::enter(long double R, long double a, long double velo, long double r_enc,double entry_time)
+{
+	// First figure out which ant should enter
+	int entry_ant = -1;
+	for(int i=0;i<x_positions.size();i++){
+		if(in_nest.at(i) == false and exit_time.at(i) == -1){ // ant must not be in nest nor have previously left nest
+			entry_ant = i;
+			break;
 		}
 	}
 
-	/* Make sure we obeyed the start in center flag */
-	if(start_in_center == true){
-		if(x_positions.at(0) != 0.0 or y_positions.at(0) != (R-r_enc)){
-			throw std::runtime_error("START IN CENTER FLAG VIOLATED DURING INITIALIZATION.");
-		}
-	}
-}
-//Method 2: Let a random device (rd) provide seed for you
-void Ants::populate(long double R, long double velo,long double r_enc,int max_init,bool start_in_center)
-{
-    std::random_device rd;
-	populate(R,velo,r_enc,max_init,rd,start_in_center); // this will call method 3
-}
-//Method 3: Pass a reference to a previously created random device (rd) and use that to seed populate
-void Ants::populate(long double R, long double velo,long double r_enc,int max_init, std::random_device &rd,bool start_in_center)
-{
-	populate(R,velo,r_enc,max_init,rd(),start_in_center); // this will call method 1
-}
+	// Init random device and seed it
+	std::random_device rd; // random device
+	long double seed = rd(); // seed
+	std::mt19937 gen(seed); // create generator with seed
+	std::uniform_real_distribution<long double> uni(0.,1); // init uniform dist on (0,1]
+	
+	// Init Positions
+	x_positions.at(entry_ant) = 0.0; // centered
+	y_positions.at(entry_ant) = R-r_enc; // located at top
 
-//Method 4: Single ant starts at the top of the nest with random downward velocity
-void Ants::populate(long double R, long double a, long double velo, long double r_enc)
-{
-	// Initialize positions at top center
-	if(x_positions.size() != 1){
-		throw std::runtime_error("INITIALIZATION FAILED! SINGLE ANT FLAG USED WITH MULTIPLE ANTS.");
-	}
-	else{
-		// Init random device and seed it
-		std::random_device rd; // random device
-		long double seed = rd(); // seed
-		std::mt19937 gen(seed); // create generator with seed
-		std::uniform_real_distribution<long double> uni(0.,1); // init uniform dist on (0,1]
-		
-		// Init Positions
-		x_positions.at(0) = 0.0; // centered
-		y_positions.at(0) = R-r_enc; // located at top
+	// Init Velocity
+	long double velo_angle = M_PI+uni(gen)*M_PI; // angle between pi and 2 pi (downward)
+	x_velocities.at(entry_ant) = velo*cos(velo_angle);
+	y_velocities.at(entry_ant) = velo*sin(velo_angle);
 
-		// Init Velocity
-		long double velo_angle = M_PI+uni(gen)*M_PI; // angle between pi and 2 pi (downward)
-		x_velocities.at(0) = velo*cos(velo_angle);
-		y_velocities.at(0) = velo*sin(velo_angle);
+	// Init all other parameters
+	ant_name.at(entry_ant) = entry_ant;
+	event_time.at(entry_ant) = entry_time;
+	collisions.at(entry_ant) = 0.0;
+	exit_time.at(entry_ant) = -1.;
+	nest_flag.at(entry_ant) = true;
 
-		// Init all other parameters
-		ant_name.at(0) = 0;
-		event_time.at(0) = 0.0;
-		collisions.at(0) = 0.0;
-		exit_time.at(0) = -1.;
-		nest_flag.at(0) = true;
-	}
+	return entry_ant;
 }
 
 
@@ -213,7 +116,7 @@ long double get_t_wall(Ants ants,long double R,long double r_enc,int &index1){
 		}
 	}
 
-	//Find t_min for all particles
+	//Find t_min for all other particles
 	for(int i=0; i<num_ants; ++i){
 		if(ants.nest_flag[i]){
 			long double x = ants.x_positions[i];
@@ -298,6 +201,19 @@ long double get_t_ant(Ants ants,long double r_enc,long double t_wall, int &index
 }
 
 
+/* This update method is for a new ant entering */
+void Ants::update(long double t_entry){
+	/* Update Particle Locations and velocities*/
+	for(int i=0;i<x_positions.size();++i){
+		if(nest_flag.at(i)){
+			x_positions.at(i) = x_positions.at(i)+x_velocities.at(i)*t_entry;
+			y_positions.at(i) = y_positions.at(i)+y_velocities.at(i)*t_entry;
+			event_time.at(i) = event_time.at(i)+t_entry;
+		}
+	}
+}
+
+
 /* This update method is for wall collisions*/
 void Ants::update(long double R,long double r_enc, long double a,long double t_min,int index1){
 	int num_ants = x_positions.size();
@@ -362,55 +278,6 @@ void Ants::update(long double R,long double r_enc, long double a,long double t_m
 			x_positions[i] = x_positions[i]+x_velocities[i]*t_min;
 			y_positions[i] = y_positions[i]+y_velocities[i]*t_min;
 			event_time[i] = event_time[i]+t_min;
-		}
-	}
-}
-
-/* This update method is for ant-to-ant collisions using conservation of momentum*/
-void Ants::update(long double t_min,long double r_enc,int index1,int index2){
-	int num_ants = x_positions.size();
-	long double sigma = 2*r_enc;
-
-	/* Update all particle locations */
-	for(int i=0;i<num_ants;++i){
-		x_positions[i] = x_positions[i]+t_min*x_velocities[i];
-		y_positions[i] = y_positions[i]+t_min*y_velocities[i];
-		event_time[i] = event_time[i]+t_min;
-	}
-
-	// Find the two particles that are colliding and update their velocities
-	// Elastic, frictionless collision
-	for (int j=0;j<num_ants;++j){
-		if (j == index1){
-			for (int k=0;k<num_ants;++k){
-				if (k == index2){
-					long double del_x, del_y, del_vx, del_vy;
-					long double J, J_x, J_y;
-					long double v_dot_r;
-
-					// Initialize Variables
-					del_x = x_positions[k]-x_positions[j];
-					del_y = y_positions[k]-y_positions[j];
-					del_vx = x_velocities[k]-x_velocities[j];
-					del_vy = y_velocities[k]-y_velocities[j];
-					v_dot_r = del_vx*del_x+del_vy*del_y;
-
-					// Define impulse for hard body spheres (assuming unit mass)
-					J = v_dot_r/sigma;
-					J_x = J*del_x/sigma;
-					J_y = J*del_y/sigma;
-
-					// Use impulse to get new heading
-					x_velocities[index1] = x_velocities[j]+J_x;
-					y_velocities[index1] = y_velocities[j]+J_y;
-					x_velocities[k] = x_velocities[k]-J_x;
-					y_velocities[k] = y_velocities[k]-J_y;
-
-					// Tick collision counter
-					collisions[j]++;
-					collisions[k]++;
-				}
-			}
 		}
 	}
 }
