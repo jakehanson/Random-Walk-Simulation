@@ -1,9 +1,9 @@
 #include "header.h"
 #include <fstream>
 
-// NEED TO SOLVE ENTRY OVERLAP PROBLEM
 // NEED TO OUTPUT ENCOUNTER RATE AS A FUNCTION OF TIME
-
+// NEED TO THINK ABOUT VARIOUS DOMAINS
+// CHECK THAT ENCOUNTER RATE DATA HOLDS AFTER UPDATING COLLISION RESOLUTION!
 
 /* Function to define geometry, initialize ants, and run/write simulation */
 int main(int argc, char** argv)
@@ -13,9 +13,9 @@ int main(int argc, char** argv)
 	double entry_rate;
 	double sim_time; // we run the sim for a fixed length of time rather than number of steps
 	if(argc == 1){
-		entry_rate = 0.01; // 1 ant enters every 100 seconds
-		max_ants = 10;
-		sim_time = 1000; // max time to run sim
+		entry_rate = 1/30.; // 1 ant enters every 30 seconds
+		max_ants = 100;
+		sim_time = 10000; // max time to run sim
 	}else if(argc == 4){
 		entry_rate = atof(argv[1]);
 		max_ants = atoi(argv[2]);
@@ -74,9 +74,9 @@ int main(int argc, char** argv)
 	double entry_counter; // keeps track of which ant is entering the nest
 	while(t <= sim_time){
 
-		//std::cout << "Time = " << t << std::endl;
+		std::cout << "Time = " << t << std::endl;
 		ants_in_nest = std::accumulate(ants.nest_flag.begin(),ants.nest_flag.end(),0); // keep track of number of ants in nest
-		//std::cout << "\tAnts in nest = " << ants_in_nest << std::endl;
+		std::cout << "\tAnts in nest = " << ants_in_nest << std::endl;
 
 		// If there are no ants in the nest, allow the next ant to enter
 		if(std::accumulate(ants.nest_flag.begin(),ants.nest_flag.end(),0) == 0){
@@ -105,18 +105,21 @@ int main(int argc, char** argv)
 				}
 				t_wall = get_t_wall(ants,R,r_enc,index1,t_entry,machine_tol); // how long until an ant collides with the wall?
 				t_ant = get_t_ant(ants,r_enc,t_wall,index2,index3,machine_tol); // how long until two ants collide?
-
 				// Run correct update
 				if(t_entry < t_wall and t_entry < t_ant){
+					//std::cout << "\tENTRY" << std::endl;
 					ants.update(t_entry,R,r_enc); // move ants to new spots in nest
 					entry_counter = ants.enter(R,a,velo,r_enc,entry_rate); // have new ant enter
 					t = t+t_entry; // update time
 				}
 				if(t_wall < t_entry and t_wall < t_ant){
-					ants.update(R,r_enc,a,t_wall,index1);	// run ant-to-wall collisions for single particle
+					//std::cout << "\tWALL" << std::endl;
+					ants.update(R,r_enc,a,t_wall,index1,machine_tol);	// run ant-to-wall collisions for single particle
+					index2 = -1; // reset index2 so that identical particles can collide again (part of a numerical precision correction)
 					t = ants.event_time.at(index1); // update time
 				}
 				if(t_ant < t_wall and t_ant < t_entry){
+					//std::cout << "\tANT" << std::endl;
 					ants.update(t_ant,r_enc,index2,index3,velo); // run an ant-to-ant collision with fixed velocity
 					t = ants.event_time.at(index2);
 				}

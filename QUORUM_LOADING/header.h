@@ -22,10 +22,9 @@ struct Ants
 	void populate(void);
 	int enter(long double R, long double a, long double velo, long double r_enc,double entry_rate);
 
-
 	/* Function to update particle locations */
 	void update(long double t_entry,long double R, long double r_enc); // ant entry
-	void update(long double R,long double r_enc,long double a,long double t_min,int index1); // ant-to-wall collision
+	void update(long double R,long double r_enc,long double a,long double t_min,int index1,long double machine_tol); // ant-to-wall collision
 	void update(long double t_min,long double r_enc,int index1,int index2,long double velo); // ant-to-ant collision
 
 };
