@@ -45,106 +45,136 @@ void Ants::populate(void)
 		y_velocities.at(i) = 0.;
 		event_time.at(i) = 0.;
 		exit_time.at(i) = -1;
-		collision.at(i) = 0.;
+		collisions.at(i) = 0.;
 		nest_flag.at(i) = false;
 	}
 }
 
 
 /* Define method for adding an ant in the center of aperture */
-int Ants::enter(long double R, long double a, long double velo, long double r_enc,double entry_time)
+int Ants::enter(long double R, long double a, long double velo, long double r_enc,double entry_rate)
 {
 	// First figure out which ant should enter
 	int entry_ant = -1;
 	for(int i=0;i<x_positions.size();i++){
-		if(in_nest.at(i) == false and exit_time.at(i) == -1){ // ant must not be in nest nor have previously left nest
+		if(nest_flag.at(i) == false and exit_time.at(i) == -1){ // ant must not be in nest nor have previously left nest
 			entry_ant = i;
 			break;
 		}
 	}
 
-	// Init random device and seed it
-	std::random_device rd; // random device
-	long double seed = rd(); // seed
-	std::mt19937 gen(seed); // create generator with seed
-	std::uniform_real_distribution<long double> uni(0.,1); // init uniform dist on (0,1]
-	
-	// Init Positions
-	x_positions.at(entry_ant) = 0.0; // centered
-	y_positions.at(entry_ant) = R-r_enc; // located at top
+	// If all ants have already entered, return -1
+	if(entry_ant == -1){
+		return entry_ant;
+	}
+	// Otherwise, initialize new ant entering from top center
+	else{
+		long double entry_time;
+		entry_time = (entry_ant+1)/entry_rate;  // Get time of entry using the entry number
+		
+		// Init Positions
+		x_positions.at(entry_ant) = 0.0; // centered
+		y_positions.at(entry_ant) = R-r_enc; // located at top
 
-	// Init Velocity
-	long double velo_angle = M_PI+uni(gen)*M_PI; // angle between pi and 2 pi (downward)
-	x_velocities.at(entry_ant) = velo*cos(velo_angle);
-	y_velocities.at(entry_ant) = velo*sin(velo_angle);
+		// Random Initial Velocity
+		std::random_device rd; // Init random device
+		long double seed = rd(); // random seed
+		//long double seed = 500; // seed with specific value (creates reproducible simulation)
+		std::mt19937 gen(seed); // mersenne-twister generator with seed
+		std::uniform_real_distribution<long double> uni(0.,1); // uniform dist on (0,1]
+		
+		long double clearance = a/(4*R); // angle needed to clear edge
+		long double velo_angle = (M_PI+clearance)+uni(gen)*(M_PI-2*clearance); // angle between pi+clearance and 2pi-clearance (downward)
+		x_velocities.at(entry_ant) = velo*cos(velo_angle);
+		y_velocities.at(entry_ant) = velo*sin(velo_angle);
 
-	// Init all other parameters
-	ant_name.at(entry_ant) = entry_ant;
-	event_time.at(entry_ant) = entry_time;
-	collisions.at(entry_ant) = 0.0;
-	exit_time.at(entry_ant) = -1.;
-	nest_flag.at(entry_ant) = true;
-
-	return entry_ant;
+		// Init all other parameters
+		ant_name.at(entry_ant) = entry_ant;
+		event_time.at(entry_ant) = entry_time;
+		collisions.at(entry_ant) = 0.0;
+		exit_time.at(entry_ant) = -1.;
+		nest_flag.at(entry_ant) = true;
+		return entry_ant;		
+	}
 }
 
 
 /* Calculate time before a wall-ant collision */
-long double get_t_wall(Ants ants,long double R,long double r_enc,int &index1){
+long double get_t_wall(Ants ants,long double R,long double r_enc,int &index1,long double t_entry,long double machine_tol){
 	int num_ants = ants.x_positions.size();
 	long double x,y,v_x,v_y;  // variables used to find collision time
 	long double t_min;
 	long double t_collide;
 	bool init = false;
 
-	//Initialize t_min with the first particle still in nest
-	while(init==false){
-		for(int i=0; i<num_ants; ++i){
-			if(ants.nest_flag[i]){
-				long double x = ants.x_positions[i];
-				long double y = ants.y_positions[i];
-				long double v_x = ants.x_velocities[i];
-				long double v_y = ants.y_velocities[i];
+	long double x_test,y_test;
 
-				t_min = (-1*(x*v_x+y*v_y)+
-					sqrt(pow(x*v_x+y*v_y,2)-(pow(v_x,2)+pow(v_y,2))*(pow(x,2)+pow(y,2)-pow(R-r_enc,2))))
-					/(pow(v_x,2)+pow(v_y,2));
-				index1 = i;
-				init = true; // we have initialized t_min
-				break;
-			}
-		}
-	}
+	t_min = t_entry; // set minimum time before event to be the next entry time
 
-	//Find t_min for all other particles
+	//Find t_min for all particles
 	for(int i=0; i<num_ants; ++i){
 		if(ants.nest_flag[i]){
+			//std::cout << "CALCULTING FOR ANT " << i << std::endl;
 			long double x = ants.x_positions[i];
 			long double y = ants.y_positions[i];
 			long double v_x = ants.x_velocities[i];
 			long double v_y = ants.y_velocities[i];
 			
-			//Get time to hit wall
 			t_collide = (-1*(x*v_x+y*v_y)+
 					sqrt(pow(x*v_x+y*v_y,2)-(pow(v_x,2)+pow(v_y,2))*(pow(x,2)+pow(y,2)-pow(R-r_enc,2))))
 					/(pow(v_x,2)+pow(v_y,2));
 
-			if(t_collide < t_min and pow(x,2.)+pow(y,2)<pow(R-r_enc,2.)){
+			if(t_collide < t_min){
 				t_min = t_collide;
 				index1 = i;
 			}
 		}		
 	}
-	//std::cout << "wall time:\t" << t_min << "\n";
-	if (t_min < 0.){
-		throw std::runtime_error("NEGATIVE TIME TO HIT WALL!");
+
+	// If we never beat t_entry, just return a time greater than t_entry
+	if(t_min == t_entry){
+		return 2*t_entry;
 	}
-	return(t_min);
+	// Otherwise, make sure we don't overstep due to numerical imprecision
+	else{
+		int counter = 0;
+		int max_tries = 10;
+		bool success_flag = false;
+		long double x_step;
+		long double y_step;
+		long double distance;		
+		while(counter < max_tries){
+			x_step = ants.x_positions.at(index1)+ants.x_velocities.at(index1)*t_min;
+			y_step = ants.y_positions.at(index1)+ants.y_velocities.at(index1)*t_min;
+			distance = std::sqrt(x_step*x_step+y_step*y_step);
+			// Check overstep
+			if(distance > (R-r_enc)){
+				//std::cout << "STEPPED OUTSIDE DOMAIN! ATTEMPTING TO SHRINK TIMESTEP BY MACHINE TOL..." << std::endl;
+				t_min -= machine_tol; // reduce timestep by machine precision
+				counter += 1; // we will try again
+			}else{
+				success_flag = true;
+				break;		
+			}
+		}
+		if(success_flag){
+			// if(counter != 0){
+			// 	std::cout << "-->ERROR RESOLVED IN " << counter << " ATTEMPT(S)." << std::endl;
+			// }
+			return t_min;
+		}else{
+			std::cout << "ATTEMPTS  = " << counter << std::endl;
+			std::cout << "FINAL DISTANCE = " << std::setprecision(20) << distance << std::endl;
+			std::cout << "R - r_enc  = " << std::setprecision(20) << R-r_enc << std::endl;
+			throw std::runtime_error("UNABLE TO CALCULATE WALL TIME!");
+			return -1; // fail
+		}
+	}
 }
 
 
 /* Calculate the time before the next ant-ant collision */
-long double get_t_ant(Ants ants,long double r_enc,long double t_wall, int &index2, int &index3){
+long double get_t_ant(Ants ants,long double r_enc,long double t_wall, int &index2, int &index3,long double machine_tol){
 	int num_ants = ants.x_positions.size();
 	long double sigma = 2*r_enc; // cross sectional distance
 	long double v_dot_r;
@@ -154,7 +184,7 @@ long double get_t_ant(Ants ants,long double r_enc,long double t_wall, int &index
 	long double t_collide;
 
 	long double t_min = 2.*t_wall; //Initialize minimum time as something more than wall collision time
-	// Note: Do not change this to t_min = t_wall!
+	// Note: Do not change this to t_min = t_wall! Numerical imprecision will MESS SHIZ UP!!
 
 	// For each ant in nest get the collision time to every other ant
 	for(int i=0;i<num_ants;++i){
@@ -177,12 +207,12 @@ long double get_t_ant(Ants ants,long double r_enc,long double t_wall, int &index
 						
 						t_collide = -1.*(v_dot_r+sqrt(d))/v_dot_v;
 
-						// Check for errors
+						// Check for numerical errors (Just discard these runs for now...)
 						if(d < 0){
-							throw std::runtime_error("Distance Violation for Ant-to-Ant Collision!");
+							throw std::runtime_error("DISTANCE VIOLATION IN COLLISION CALCULATION.");
 						}
 						if (t_collide < 0.0){
-							throw std::runtime_error("Negative Time for Ant-to-Ant Collision!");
+							throw std::runtime_error("NEGATIVE TIME CALCULATED IN ANT COLLISION");
 						}
 
 						// Check if collision is next event
@@ -196,19 +226,67 @@ long double get_t_ant(Ants ants,long double r_enc,long double t_wall, int &index
 			}
 		}
 	}
-	//std::cout << "Ant time:\t" << t_min << "\n";
-	return(t_min);
+
+	// If we never beat t_wall, just return t_wall as the minimum time
+	if(t_min >= t_wall){
+		return t_min;
+	}
+	// Else we need to make sure that we don't overstep and have particles lock together
+	else{
+		int counter = 0;
+		int max_tries = 10; // tries to resolve issue
+		bool success_flag = false;
+		long double x1;
+		long double y1;
+		long double x2;
+		long double y2;
+		long double separation;
+
+		while(counter < max_tries){
+			x1 = ants.x_positions.at(index2)+ants.x_velocities.at(index2)*t_min;
+			y1 = ants.y_positions.at(index2)+ants.y_velocities.at(index2)*t_min;
+			x2 = ants.x_positions.at(index3)+ants.x_velocities.at(index3)*t_min;
+			y2 = ants.y_positions.at(index3)+ants.y_velocities.at(index3)*t_min;
+			separation = std::sqrt(pow(x1-x2,2)+pow(y1-y2,2));
+			// Check overstep
+			if(separation < 2.*r_enc){
+				// std::cout << "OVERLAP ISSUE!! ATTEMPTING TO SHRINK TIMESTEP BY MACHINE TOL..." << std::endl;
+				t_min -= machine_tol; // reduce timestep by machine precision
+				counter += 1; // we will try again
+			}else{
+				success_flag = true;
+				break;		
+			}
+		}
+
+		if(success_flag){
+			// if(counter != 0){
+			// 	std::cout << "--> ERROR RESOLVED IN " << counter << " TIMESTEPS." << std::endl;
+			// }
+			return t_min;
+		}else{
+			throw std::runtime_error("UNABLE TO RESOLVE ANT-TO-ANT COLLISION!");
+			return -1; // fail	
+		}
+	}
 }
 
 
 /* This update method is for a new ant entering */
-void Ants::update(long double t_entry){
+void Ants::update(long double t_entry,long double R, long double r_enc){
+	long double distance;
 	/* Update Particle Locations and velocities*/
 	for(int i=0;i<x_positions.size();++i){
 		if(nest_flag.at(i)){
 			x_positions.at(i) = x_positions.at(i)+x_velocities.at(i)*t_entry;
 			y_positions.at(i) = y_positions.at(i)+y_velocities.at(i)*t_entry;
 			event_time.at(i) = event_time.at(i)+t_entry;
+
+			// Make sure we won't initalize the new particle on top of an existing particle
+			if(std::abs(x_positions.at(i))<r_enc and std::abs(y_positions.at(i)-(R-r_enc))<r_enc){
+				throw std::runtime_error("ERROR! OVERLAP IN ANT ENTRY.");
+			}
+
 		}
 	}
 }
@@ -275,9 +353,11 @@ void Ants::update(long double R,long double r_enc, long double a,long double t_m
 
 		// update particles not colliding with wall
 		}else{
-			x_positions[i] = x_positions[i]+x_velocities[i]*t_min;
-			y_positions[i] = y_positions[i]+y_velocities[i]*t_min;
-			event_time[i] = event_time[i]+t_min;
+			if(nest_flag.at(i)){
+				x_positions[i] = x_positions[i]+x_velocities[i]*t_min;
+				y_positions[i] = y_positions[i]+y_velocities[i]*t_min;
+				event_time[i] = event_time[i]+t_min;				
+			}
 		}
 	}
 }
@@ -290,9 +370,11 @@ void Ants::update(long double t_min,long double r_enc,int index1,int index2,long
 
 	/* Update all particle locations */
 	for(int i=0;i<num_ants;++i){
-		x_positions[i] = x_positions[i]+t_min*x_velocities[i];
-		y_positions[i] = y_positions[i]+t_min*y_velocities[i];
-		event_time[i] = event_time[i]+t_min;
+		if(nest_flag.at(i)){
+			x_positions[i] = x_positions[i]+t_min*x_velocities[i];
+			y_positions[i] = y_positions[i]+t_min*y_velocities[i];
+			event_time[i] = event_time[i]+t_min;
+		}
 	}
 
 	// Find the two particles that are colliding and update their velocities
