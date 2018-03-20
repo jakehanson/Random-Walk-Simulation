@@ -39,9 +39,9 @@ int main(int argc, char** argv)
 
 	// Write parameters to file
 	std::ofstream params("params.txt");
-	params << "R\ta\tvelocity\tr_enc\tnum_ants\tcollision_flag\tcenter_flag\texit_flag" << std::endl;
+	params << "R\ta\tvelocity\tr_enc\tnum_ants\tcollision_flag\tcenter_flag\texit_flag\tfixed_velo" << std::endl;
 	params << R << "\t" << a << "\t" << velo << "\t" << r_enc << "\t" << num_ants << "\t"
-			<< collision_flag << "\t" << start_in_center << "\t" << exit_flag << std::endl;
+			<< collision_flag << "\t" << start_in_center << "\t" << exit_flag << "\t" << fixed_velo << std::endl;
 	params.close();
 
 	// Open file to hold simulation data
