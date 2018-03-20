@@ -12,12 +12,12 @@ The code has three primary files:
 
 * **header.h** - standard header for function prototypes and libraries
 
-There are also two subdirectories:
+There are also multiple subdirectories:
 * **IMAGES** - example animations from simulation output
 
 * **QUORUM_LOADING** - define an entry rate and a threshold for transport
 
-* **MOMENTUM** - old codes capable of easily implementing conservation of momentum
+* **MOMENTUM** - codes capable of easily implementing conservation of momentum
 
 
 
@@ -27,6 +27,7 @@ To run the code:
 * **Download**: the primary files main.cpp, functions.cpp, header.h (or the entire directory)
 * **Compile:** the code must be compiled to make an executable
   * g++ -std=c++11 -O3 main.cpp functions.cpp -o run_sim.exe
+  * Note: the -O3 flag is the letter 'O', as in optimization, not the number 0!
 * **Run Option 1**: the code can be run from the command line without any arguments
   * ./run_sim.exe
 * **Run Option 2:** the code can also be running by accepting the number of ants as an integer argument
