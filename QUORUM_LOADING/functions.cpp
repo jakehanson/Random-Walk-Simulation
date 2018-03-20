@@ -3,8 +3,6 @@
 #include <cmath>
 #include <stdexcept>
 
-// THIS IS THE NEW COLLISION RESOLUTION!!
-
 /* Define function to overload the operator << such that if the input is std:ostream &out and &ants it prints as follows*/
 std::ostream &operator<<(std::ostream &out, Ants const &ants)
 {

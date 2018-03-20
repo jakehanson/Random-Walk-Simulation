@@ -1,6 +1,6 @@
 # QUORUM LOADING
 
-This directory looks at how the encounter rate changes as a function of time for nests of varying quality. The hypothesis is that quorum is sensed via encounter rate, thus, one would expect that high quality nests are able to reach and maintain a high encounter rate while low quality nests cannot. We investigate this hypothesis within the framework of the random walk model by supplying two nests of different quality (different aperture size) with a constant influx of ants. The idea is that the good nest should naturally "load" and reach quorum while the mediocre nest should not.
+This directory examines quorum loading, which is essentially the process by which nests build up to quorum. We assume a fixed entry rate, and allow free outflow. We test the hypothesis that certain nest geometries preferentially hold recruiters, thereby allowing them to reach quorum.
 
 ## Syntax
 
@@ -16,7 +16,6 @@ or
 
 ./run_sim entry_rate max_ants sim_time
 
-where entry_rate (ants/second), max_ants, and sim_time (seconds) are all floating point values separated by a space.
-
+where entry_rate (ants/second), max_ants, and sim_time (seconds) are floating point values separated by a space.
 
 jake.hanson@asu.edu

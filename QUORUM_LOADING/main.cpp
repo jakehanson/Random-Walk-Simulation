@@ -1,10 +1,6 @@
 #include "header.h"
 #include <fstream>
 
-// CAREFULLY READ ALL CODE... THROW ERRORS WHERE FAIL
-// SAVE TO GIT
-// GET DATA
-
 /* Function to define geometry, initialize ants, and run/write simulation */
 int main(int argc, char** argv)
 {
