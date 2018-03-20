@@ -1,7 +1,7 @@
 # Random Walk Simulation
 ![alt text](https://github.com/jakehanson/Random-Walk-Simulation/blob/dev/IMAGES/n20_good.gif)
 
-This is a general purpose brownian motion / random walk simulator designed to examine similarities between ants exploring nests and particles in a disk. Collisions are typically handled according to specular (mirror-like) reflection with fixed ingoing and outgoing velocity. The simulation is event based which means timestep is dictated by the time until the next event (either collisions between particles or a particle and the wall). This avoids potential pitfalls due to simultaneous events and speeds up computation time, but one should be aware that visualizations of the data will either have to be smoothed in time or appear jumpy due to the non-uniform timestep. More information about this type of simulation can be found here: http://introcs.cs.princeton.edu/java/assignments/collisions.html.
+This is a general purpose brownian motion / random walk simulator designed to explore potential similarities between ants in their nests and particles in a disk. Collisions can be handled using fixed velocity and specular reflection or conservation of momentum and the 'hard body sphere' approximation. The simulation is event based which means timestep is dictated by the time until the next event (either collisions between particles or a particle and the wall). This avoids potential pitfalls due to simultaneous events and speeds up computation time, but one should be aware that visualizations of the data will either have to be smoothed in time or appear jumpy due to the non-uniform timestep. More information about this type of simulation can be found here: http://introcs.cs.princeton.edu/java/assignments/collisions.html.
 
 ## General Overview
 
@@ -12,13 +12,10 @@ The code has three primary files:
 
 * **header.h** - standard header for function prototypes and libraries
 
-There are also multiple subdirectories:
+There are also two subdirectories:
 * **IMAGES** - example animations from simulation output
 
-* **QUORUM_LOADING** - define an entry rate and a threshold for transport
-
-* **MOMENTUM** - codes capable of easily implementing conservation of momentum
-
+* **QUORUM_LOADING** - define an entry rate and threshold to transport
 
 
 ## Download and Run
@@ -27,7 +24,7 @@ To run the code:
 * **Download**: the primary files main.cpp, functions.cpp, header.h (or the entire directory)
 * **Compile:** the code must be compiled to make an executable
   * g++ -std=c++11 -O3 main.cpp functions.cpp -o run_sim.exe
-  * Note: the -O3 flag is the letter 'O', as in optimization, not the number 0!
+  * Note: the -O3 flag is the letter 'O' as in optimization (not the number 0!)
 * **Run Option 1**: the code can be run from the command line without any arguments
   * ./run_sim.exe
 * **Run Option 2:** the code can also be running by accepting the number of ants as an integer argument
@@ -39,10 +36,13 @@ As a first check that everything is working, ./run_sim.exe should produce to out
 
 Once you have the source code in your local directory you can modify the simulation parameters by opening main.cpp in a text editor and changing the variables and flags at the top.
 
-The code in this directory has two main ways to be run, which can be accessed via the 'start_in_center' flag.
+The code is designed to model ants in a nest as particles in a disk. This being said, there are certain flags that violate the laws of physics in order to test different assumptions about ant behavior. The following descriptions provide information about the differences 
+
+#### Conservation of Momentum vs Fixed Velocity
+For most molecular dynamics, you will want collisions to conserve momentum. However, for simulating ants a more realistic assumption is that each ant maintains a fixed velocity. The split between these two options is controlled with the 'fixed_velo' flag. If false, the simulation will obey conservation of momentum, if true, particles reflect specularly but keep their same velocity at all times.
 
 #### Starting Ant in Aperture Center
-In this directory, we are usually interested in how long an ant spends inside a nest of a given geometry. Therefore there is a flag called 'start_in_center' to start an ant in the center of an aperture and a flag called 'exit_flag' to end the simulation when this ant leaves, thereby timing a single ants visit. Turning these flags off means that you will initialize a full nest of ants and the sim only ends when the last ant leaves.
+For ant simulations, we are usually interested in how long an ant spends inside a nest of a given geometry. Therefore there is a flag called 'start_in_center' to start an ant in the center of an aperture and a flag called 'exit_flag' to end the simulation when this ant leaves, thereby timing a single ants visit. For molecular dynamics, these should both be set to false to prevent biasing results.
 
 #### Other parameters
 
@@ -64,6 +64,6 @@ The secondary output is params.txt which basically rewrites the parameters used 
 ## Animation
 There is a jupyter notebook called Event Based Animation.ipynb that was used to generate animation gifs. While github can render the jupyter notebook in the browser, it must be run locally to create the animation. If you are unfamiliar with jupyter notebooks it is probably easier to read output.txt into your favorite plotting software.
 
-## FEEL FREE TO EMAIL ANY QUESTIONS
+## FEEL FREE TO EMAIL ANY QUESTIONS! 
 
 jake.hanson@asu.edu
