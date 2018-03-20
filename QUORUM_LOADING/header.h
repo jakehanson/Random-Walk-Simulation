@@ -20,11 +20,14 @@ struct Ants
 	//Ants(size_t num_ants,long double temp);  // signature for constructor. construct instance of class
 	Ants(int num_ants);  // signature for constructor. construct instance of class
 	void populate(void);
-	int enter(long double R, long double a, long double velo, long double r_enc,double entry_rate);
+	int check(double r_enc); // check separation
+	int enter(long double R, long double a, long double velo, long double r_enc,double entry_rate,long double machine_tol); // new ant enter nest
+	//int enter(long double R, long double a, long double velo, long double r_enc,double entry_rate, long double delay); // run update method with delay added
 
 	/* Function to update particle locations */
-	void update(long double t_entry,long double R, long double r_enc); // ant entry
-	void update(long double R,long double r_enc,long double a,long double t_min,int index1,long double machine_tol); // ant-to-wall collision
+	void update_ant(int ant_index,long double t); // move single ant by t
+	void update_all(long double t); // move all ants by t
+	void update(long double R,long double r_enc,long double a,long double t_min,int index1); // ant-to-wall collision
 	void update(long double t_min,long double r_enc,int index1,int index2,long double velo); // ant-to-ant collision
 
 };
