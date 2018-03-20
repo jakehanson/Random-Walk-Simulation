@@ -3,6 +3,7 @@
 #include <cmath>
 #include <stdexcept>
 
+
 /* Define function to overload the operator << such that if the input is std:ostream &out and &ants it prints as follows*/
 std::ostream &operator<<(std::ostream &out, Ants const &ants)
 {
@@ -12,8 +13,10 @@ std::ostream &operator<<(std::ostream &out, Ants const &ants)
 		out << ants.y_positions[i] << "\t";
 		out << ants.x_velocities[i] << "\t";
 		out << ants.y_velocities[i] << "\t";
+		out << ants.entry_time[i] << "\t";
 		out << ants.event_time[i] << "\t";
 		out << ants.exit_time[i] << "\t";
+		out << ants.quorum_flag[i] << "\t";
 		out << ants.collisions[i] << "\t";
 		out << ants.nest_flag[i] << std::endl;
 	}
@@ -29,10 +32,13 @@ Ants::Ants(int num_ants)
 	y_positions = std::vector<long double>(num_ants);
 	x_velocities = std::vector<long double>(num_ants);
 	y_velocities = std::vector<long double>(num_ants);
+	entry_time = std::vector<long double>(num_ants);
 	event_time = std::vector<long double>(num_ants);
 	exit_time = std::vector<long double>(num_ants);
 	collisions = std::vector<long double>(num_ants);
 	nest_flag = std::vector<bool>(num_ants);
+	quorum_flag = std::vector<bool>(num_ants);
+
 }
 
 
@@ -49,6 +55,7 @@ void Ants::populate(void)
 		exit_time.at(i) = -1;
 		collisions.at(i) = 0.;
 		nest_flag.at(i) = false;
+		quorum_flag.at(i) = false;
 	}
 }
 
@@ -58,7 +65,6 @@ int Ants::check(double r_enc)
 {
 	double d;
 	double x1,y1,x2,y2;
-
 	// For each ant, check if there is overlap
 	for(int i=0;i<x_positions.size();i++){
 		if(nest_flag.at(i) == true){
@@ -76,7 +82,6 @@ int Ants::check(double r_enc)
 					}
 				}
 			}
-
 		}
 	}
 	return 1; // if there are no problems, return 1
@@ -84,27 +89,19 @@ int Ants::check(double r_enc)
 
 
 /* Define method for adding an ant somewhere in the aperture */
-int Ants::enter(long double R, long double a, long double velo, long double r_enc,double entry_rate,long double machine_tol)
+void Ants::recruiter_enter(int entry_ant,long double R, long double a, long double velo, long double r_enc,long double recruiter_rate,long double machine_tol)
 {
-	// First figure out which ant should enter
-	int entry_ant = -1;
-	for(int i=0;i<x_positions.size();i++){
-		if(nest_flag.at(i) == false and exit_time.at(i) == -1){ // ant must not be in nest nor have previously left nest
-			entry_ant = i;
-			break;
-		}
-	}
 
 	// If all ants have already entered, return -1
 	if(entry_ant == -1){
-		return entry_ant;
+		throw std::runtime_error("RECRUITER UPDATE WITHOUT VALID RECRUITER.");
 	}
 	// Otherwise, initialize new ant entering from somewhere in the aperture
 	else{
-		long double entry_time;
-		int n_tries = 50; // 50 tries to enter the nest
+		long double t;
+		int n_tries = 200; // number tries to enter the nest
 		int entry_flag = 0; // flag for trying to enter
-		entry_time = (entry_ant+1)/entry_rate;  // Get time of entry using the entry number
+		t = (entry_ant+1)/recruiter_rate;  // Get time of entry using the entry number
 
 		// Random Initial Position and velocity
 		std::random_device rd; // Init random device
@@ -116,7 +113,7 @@ int Ants::enter(long double R, long double a, long double velo, long double r_en
 		// Try to enter
 		long double x,y;
 		long double entry_size = (a-2*r_enc)/R; // angular size of aperture given the size of the ant
-		long double entry_angle = (M_PI/2-entry_size/2.)+uni(gen)*(entry_size);  // random angle in aperture
+		long double entry_angle;  // random angle in aperture
 		long double x1,y1,x2,y2; // clearance positions on left and right
 		long double v_x,v_y; // projected velocities
 		long double alpha,beta; // minimum angles needed to reach clearance positions
@@ -125,7 +122,9 @@ int Ants::enter(long double R, long double a, long double velo, long double r_en
 
 		for(int i=0;i<n_tries;i++){
 			if(entry_flag == 0){
+
 				// Initialize Position
+				entry_angle = (M_PI/2-entry_size/2.)+uni(gen)*(entry_size);
 				x = R*cos(entry_angle); 
 				y = R*sin(entry_angle);
 
@@ -151,7 +150,7 @@ int Ants::enter(long double R, long double a, long double velo, long double r_en
 					x_velocities.at(entry_ant) = v_x;
 					y_velocities.at(entry_ant) = v_y;
 					nest_flag.at(entry_ant) = true;
-					update_ant(entry_ant,t_cross); // move ant into nest
+					move_ant(entry_ant,t_cross); // move ant into nest
 					entry_flag = check(r_enc); // check for overlap
 					if(entry_flag == 1){
 						//std::cout << "GOOD! ENTRY IN " << i+1 << " TRIES!" << std::endl;
@@ -166,18 +165,61 @@ int Ants::enter(long double R, long double a, long double velo, long double r_en
 			throw std::runtime_error("UNABLE TO ENTER NEST");
 		}else{
 			ant_name.at(entry_ant) = entry_ant;
-			event_time.at(entry_ant) = entry_time;
+			event_time.at(entry_ant) = t;
+			entry_time.at(entry_ant) = t;
 			collisions.at(entry_ant) = 0.0;
 			exit_time.at(entry_ant) = -1.;
 		}
-	
-	return entry_ant; // return index of entering ant
 	}
 }
 
 
+/* Define method for adding an ant somewhere in the nest */
+void Ants::brood_enter(int entry_index,long double R, long double a, long double velo, long double r_enc,long double t,long double machine_tol)
+{
+	// Initialize ant somewhere in nest
+	int n_tries = 50; // 50 tries to enter the nest
+	int entry_flag = 0; // flag for trying to enter
+
+	// Random Initial Position and velocity
+	std::random_device rd; // Init random device
+	long double seed = rd(); // random seed
+	std::mt19937 gen(seed); // mersenne-twister generator with seed
+	std::uniform_real_distribution<long double> uni(0.,1); // uniform dist on (0,1]
+
+	// Try to be placed
+	long double radius,theta; // random variables
+	for(int i=0;i<n_tries;i++){
+		if(entry_flag == 0){
+			// Init position
+			radius = uni(gen)*(R-r_enc);
+			theta = uni(gen)*2*M_PI;
+			x_positions.at(entry_index) = radius*cos(theta);
+			y_positions.at(entry_index) = radius*sin(theta);
+			x_velocities.at(entry_index) = 0.;
+			y_velocities.at(entry_index) = 0.;
+			nest_flag.at(entry_index) = true;
+			entry_flag = check(r_enc); // check for overlap
+			if(entry_flag == 1){
+				//std::cout << "GOOD! ENTRY IN " << i+1 << " TRIES!" << std::endl;
+				break;
+			}
+		}
+	}
+	// If we were unable to enter, throw error, else update information
+	if(entry_flag == 0){
+		throw std::runtime_error("UNABLE TO ENTER NEST");
+	}else{
+		ant_name.at(entry_index) = entry_index;
+		event_time.at(entry_index) = t;
+		collisions.at(entry_index) = 0.0;
+		entry_time.at(entry_index) = t;
+		exit_time.at(entry_index) = -1.;
+	}
+}
+
 /* Calculate time before a wall-ant collision */
-long double get_t_wall(Ants ants,long double R,long double r_enc,int &index1,long double t_entry,long double machine_tol){
+long double get_t_wall(Ants ants,long double R,long double r_enc,int &index1,long double t_rec,long double machine_tol){
 	int num_ants = ants.x_positions.size();
 	long double x,y,v_x,v_y;  // variables used to find collision time
 	long double t_min;
@@ -185,7 +227,7 @@ long double get_t_wall(Ants ants,long double R,long double r_enc,int &index1,lon
 	long double x_new,y_new;
 	long double t1, t2; // roots of t
 
-	t_min = 10.*t_entry; // set minimum time before event to be longer than the next entry time
+	t_min = 10.*t_rec; // set minimum time before event to be longer than the next recruiter entry time
 	
 	//Find t_min for all particles
 	for(int i=0; i<num_ants; ++i){
@@ -199,10 +241,6 @@ long double get_t_wall(Ants ants,long double R,long double r_enc,int &index1,lon
 					sqrt(pow(x*v_x+y*v_y,2)-(pow(v_x,2)+pow(v_y,2))*(pow(x,2)+pow(y,2)-pow(R-r_enc,2))))
 					/(pow(v_x,2)+pow(v_y,2));
 
-			if(t_collide > 2.*R/0.1){
-				std::cout << "ERROR! TIME TO HIT WALL IS LARGERS THAN LARGEST CHORD!" << std::endl;
-			}
-
 			// Check if collision is the next event
 			if(t_collide < t_min){
 				t_min = t_collide;
@@ -210,6 +248,9 @@ long double get_t_wall(Ants ants,long double R,long double r_enc,int &index1,lon
 				index1 = i;
 			}
 		}		
+	}
+	if(t_min < 0){
+		throw std::runtime_error("NEGATIVE TIME UNTIL WALL COLLISION.");
 	}
 	return t_min;
 }
@@ -259,8 +300,7 @@ long double get_t_ant(Ants ants,long double r_enc,long double t_wall, int &index
 		}
 	}
 	if(t_min < 0){
-
-		throw std::runtime_error("WHAT?");
+		throw std::runtime_error("NEGATIVE TIME UNTIL ANT COLLISION.");
 	}
 	return t_min;
 }
@@ -269,18 +309,18 @@ long double get_t_ant(Ants ants,long double r_enc,long double t_wall, int &index
 /* This update method is for a new ant entering */
 // Note, if we are running this, no ant is exiting because there isn't a wall collision
 // There also won't be any overlap because an ant-to-ant collision isn't being run
-void Ants::update_all(long double t){
+void Ants::move_all(long double t){
 	// Update Particle Locations and velocities
 	for(int i=0;i<x_positions.size();++i){
 		if(nest_flag.at(i)){
-			update_ant(i,t); // update locations
+			move_ant(i,t); // update locations
 			event_time.at(i) = event_time.at(i)+t; // update times
 		}
 	}
 }
 
 
-void Ants::update_ant(int index,long double t){
+void Ants::move_ant(int index,long double t){
 	x_positions.at(index) = x_positions.at(index)+x_velocities.at(index)*t;
 	y_positions.at(index) = y_positions.at(index)+y_velocities.at(index)*t;
 }
@@ -292,6 +332,7 @@ void Ants::update(long double R,long double r_enc, long double a,long double t_m
 	long double angle1; // angle to the location where the particle hits the wall
 	long double angle2; // angle to the initial position of the particle
 	long double final_angle; // angle of where the particle would be t_min after colliding with wall
+
 
 	/* Update Particle Locations and velocities*/
 	for(int i=0;i<num_ants;++i){
@@ -322,7 +363,8 @@ void Ants::update(long double R,long double r_enc, long double a,long double t_m
 			y_velocities[i] = (y_temp-y_new)/t_min;
 			x_positions[i] = x_new;
 			y_positions[i] = y_new;
-			event_time[i] = event_time[i]+t_min;				
+			//std::cout << "EVENT TIME AT I = " << event_time[i] << std::endl;
+			event_time[i] = event_time[i]+t_min;
 
 			//Did we make it out?
 			if(x_positions[i] >= 0 and y_positions[i] >= 0){
@@ -341,6 +383,10 @@ void Ants::update(long double R,long double r_enc, long double a,long double t_m
 					//std::cout << "Where are we? " << x_new << "\t" << y_new << "\t" << sqrt(pow(x,2)+pow(y,2)) << std::endl;
 					nest_flag[i] = false;
 					exit_time[i] = event_time[i];
+					// if(exit_time[i]-entry_time[i]>quorum_time){
+					// 	std::cout << "\tEXIT AFTER " << exit_time[i]-entry_time[i] << " SECONDS." << std::endl;
+					// 	quorum_flag[i] = true;
+					// }
 				}
 			}
 
@@ -361,13 +407,7 @@ void Ants::update(long double t_min,long double r_enc,int index1,int index2,long
 	int num_ants = x_positions.size();
 
 	/* Update all particle locations */
-	for(int i=0;i<x_positions.size();++i){
-		if(nest_flag.at(i)){
-			x_positions[i] = x_positions[i]+t_min*x_velocities[i];
-			y_positions[i] = y_positions[i]+t_min*y_velocities[i];
-			event_time[i] = event_time[i]+t_min;
-		}
-	}
+	move_all(t_min);
 
 	// Find the two particles that are colliding and update their velocities
 	// Specular reflection
