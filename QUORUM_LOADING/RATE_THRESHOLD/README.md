@@ -1,4 +1,4 @@
-# QUORUM LOADING (ENC RATE)
+# QUORUM LOADING (ENCOUNTER RATE THRESHOLD)
 
 This is really the heart and soul of the quorum loading codes. I have got rid of brood for now and am just looking at probability to transport, assuming quorum is sensed relative to a threshold encounter rate.
 
