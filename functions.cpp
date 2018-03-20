@@ -3,6 +3,8 @@
 #include <cmath>
 #include <stdexcept>
 
+// THIS IS THE OLD HARD BODY SPHERE COLLISIONS!!!
+
 /* Define function to overload the operator << such that if the input is std:ostream &out and &ants it prints as follows*/
 std::ostream &operator<<(std::ostream &out, Ants const &ants)
 {
@@ -429,39 +431,47 @@ void Ants::update(long double t_min,long double r_enc,int index1,int index2,long
 	}
 
 	// Find the two particles that are colliding and update their velocities
-	// Elastic, frictionless collision
+	// Specular reflection
 	for (int j=0;j<num_ants;++j){
 		if (j == index1){
 			for (int k=0;k<num_ants;++k){
 				if (k == index2){
-					long double del_x, del_y, del_vx, del_vy;
-					long double J, J_x, J_y;
-					long double v_dot_r;
-					long double vx1,vy1,vx2,vy2;
+					long double del_x, del_y;
+					long double theta; // coordinate rotation
+					double vx1,vy1,vx2,vy2; // initial velocities
+					double tx1,ty1,tx2,ty2; // temporary velocities
+					double ux1,uy1,ux2,uy2; // new velocities
 
 					// Initialize Variables
+					vx1 = x_velocities[j];
+					vy1 = y_velocities[j];
+					vx2 = x_velocities[k];
+					vy2 = y_velocities[k];
 					del_x = x_positions[k]-x_positions[j];
 					del_y = y_positions[k]-y_positions[j];
-					del_vx = x_velocities[k]-x_velocities[j];
-					del_vy = y_velocities[k]-y_velocities[j];
-					v_dot_r = del_vx*del_x+del_vy*del_y;
+					theta = atan(del_y/del_x);
 
-					// Define impulse for hard body spheres (assuming unit mass)
-					J = v_dot_r/sigma;
-					J_x = J*del_x/sigma;
-					J_y = J*del_y/sigma;
+					// First rotate into new coordinate system
+					tx1 = vx1*cos(theta)+vy1*sin(theta);
+					ty1 = -vx1*sin(theta)+vy1*cos(theta);
+					tx2 = vx2*cos(theta)+vy2*sin(theta);
+					ty2 = -vx2*sin(theta)+vy2*cos(theta);
 
-					// Use impulse to get new heading
-					vx1 = x_velocities[j]+J_x;
-					vy1 = y_velocities[j]+J_y;
-					vx2 = x_velocities[k]-J_x;
-					vy2 = y_velocities[k]-J_y;
+					// Flip x-velocity
+					tx1 = -tx1;
+					tx2 = -tx2;
 
-					// Fix velocity and use heading for direction
-					x_velocities[j] = velo*vx1/sqrt(pow(vx1,2)+pow(vy1,2));
-					y_velocities[j] = velo*vy1/sqrt(pow(vx1,2)+pow(vy1,2));
-					x_velocities[k] = velo*vx2/sqrt(pow(vx2,2)+pow(vy2,2));
-					y_velocities[k] = velo*vy2/sqrt(pow(vx2,2)+pow(vy2,2));
+					// De-rotate
+					ux1 = tx1*cos(theta)-ty1*sin(theta);
+					uy1 = tx1*sin(theta)+ty1*cos(theta);
+					ux2 = tx2*cos(theta)-ty2*sin(theta);
+					uy2 = tx2*sin(theta)+ty2*cos(theta);
+
+					// Update
+					x_velocities[j] = ux1;			
+					y_velocities[j] = uy1;			
+					x_velocities[k] = ux2;			
+					y_velocities[k] = uy2;			
 
 					// Tick collision counter
 					collisions[j]++;

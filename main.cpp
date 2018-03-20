@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 	int max_init = 500;  // max number of tries to initialize a given setup so no ants overlap 
 	int max_steps= 50000; // max number of events in simulation (event is collision w/ wall or ant)
 
-	int ants_in_nest; // used to calculate how many ants are in nest
+	int ants_in_nest = num_ants; // used to calculate how many ants are in nest
 	bool collision_flag = true; // true means collisions are on
 	bool all_clear = false;  // used to break out of main simulation
 	int counter = 0; // counts simulation steps
@@ -97,6 +97,7 @@ int main(int argc, char** argv)
 		}
 
 		data_file << ants; //write to file
+		ants_in_nest = std::accumulate(ants.nest_flag.begin(),ants.nest_flag.end(),0); // keep track of number of ants in nest
 
 		// Test to see if we've reached max iterations
 		counter++;
@@ -106,16 +107,18 @@ int main(int argc, char** argv)
 			std::cout << "Bad\t" << num_ants << "\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
 			all_clear = true;
 		}
-		// Test to see if ant 0 has left
+		// If the trial ends when ant 0 leaves, check if ant 0 left
 		if(exit_flag == true){
 			if(ants.nest_flag.at(0)==0){
 				//std::cout << "Ant 0 has left nest -- trial complete.\n";
+				//std::cout << "Ants Left:\t" << std::accumulate(ants.nest_flag.begin(),ants.nest_flag.end(),0) << std::endl;
 				std::cout << "Good\t" << num_ants << "\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
 				all_clear = true;
 			}
+		// Else, see if all ants have left
 		}else{
-			//Calculate how many ants are still in nest
-			ants_in_nest = std::accumulate(ants.nest_flag.begin(),ants.nest_flag.end(),0);
+			//ants_in_nest = std::accumulate(ants.nest_flag.begin(),ants.nest_flag.end(),0);
+			//std::cout << "Ants in Nest = " << ants_in_nest << std::endl;
 			if(ants_in_nest == 0){
 				std::cout << "Good\t" << num_ants << "\t" << ants.event_time[0] << "\t" << ants.collisions[0] << std::endl;
 				//std::cout << "All ants have left nest -- trial complete.\n" << std::endl;
@@ -126,7 +129,7 @@ int main(int argc, char** argv)
 
 
 	data_file.close();
-	// std::cout << "ANTS LEFT: " << ants_in_nest << std::endl;
-	// std::cout << "SIMULATION COMPLETE." << std::endl;
+	std::cout << "ANTS LEFT: " << ants_in_nest << std::endl;
+	std::cout << "SIMULATION COMPLETE." << std::endl;
 
 }
