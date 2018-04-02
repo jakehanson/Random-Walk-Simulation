@@ -1,4 +1,4 @@
-# Random Walk Simulation
+# Random Walk Simulation (TEST)
 ![alt text](https://github.com/jakehanson/Random-Walk-Simulation/blob/dev/IMAGES/n20_good.gif)
 
 This is a general purpose brownian motion / random walk simulator designed to explore potential similarities between ants in their nests and particles in a disk. Collisions can be handled using fixed velocity and specular reflection or conservation of momentum and the 'hard body sphere' approximation. The simulation is event based which means timestep is dictated by the time until the next event (either collisions between particles or a particle and the wall). This avoids potential pitfalls due to simultaneous events and speeds up computation time, but one should be aware that visualizations of the data will either have to be smoothed in time or appear jumpy due to the non-uniform timestep. More information about this type of simulation can be found here: http://introcs.cs.princeton.edu/java/assignments/collisions.html.
