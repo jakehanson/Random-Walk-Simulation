@@ -2,6 +2,8 @@
 
 This directory examines quorum loading, which is essentially the process by which nests build up to quorum. We assume a fixed entry rate, and allow free outflow. We test the hypothesis that certain nest geometries preferentially hold recruiters, thereby allowing them to reach quorum.
 
+Note, this branch is under active development. Several updates have been implemented, including careful handling of overlap upon nest entry and other resolutions to small glitches.
+
 ## Syntax
 
 To compile, download this directory and enter the following:
