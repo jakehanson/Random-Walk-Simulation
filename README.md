@@ -64,6 +64,6 @@ The secondary output is params.txt which basically rewrites the parameters used 
 ## Animation
 There is a jupyter notebook called Event Based Animation.ipynb that was used to generate animation gifs. While github can render the jupyter notebook in the browser, it must be run locally to create the animation. If you are unfamiliar with jupyter notebooks it is probably easier to read output.txt into your favorite plotting software.
 
-## FEEL FREE TO EMAIL ANY QUESTIONS! 
+## Email
 
 jake.hanson@asu.edu
